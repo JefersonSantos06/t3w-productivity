@@ -1,36 +1,116 @@
-name: Build
+name: Build and Publish Plugin to R2
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
+  workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 
 jobs:
-  build:
-    name: Build and Test
+  publish-r2:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Fetch Sources
+      - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Java
+      - name: Setup Java 21
         uses: actions/setup-java@v5
         with:
           distribution: zulu
-          java-version: 21
+          java-version: "21"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
 
-      - name: Build plugin
+      - name: Build plugin ZIP
         run: ./gradlew buildPlugin
 
-      - name: Run tests
-        run: ./gradlew test
+      - name: Prepare plugin ZIP and updatePlugins.xml
+        shell: bash
+        env:
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+        run: |
+          set -euo pipefail
 
-      - name: Verify plugin
-        run: ./gradlew verifyPlugin
+          # 1) Localiza ZIP gerado pelo Gradle
+          ZIP_PATH="$(ls -1 build/distributions/*.zip | head -n 1)"
+          if [ -z "${ZIP_PATH}" ]; then
+            echo "Nenhum ZIP encontrado em build/distributions"
+            exit 1
+          fi
+
+          # Nome fixo no bucket (sempre sobrescreve)
+          cp "${ZIP_PATH}" /tmp/t3w-productivity.zip
+
+          # 2) Lê metadados do plugin
+          python - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+
+          # gradle.properties
+          props = {}
+          with open("gradle.properties", "r", encoding="utf-8") as f:
+              for line in f:
+                  line = line.strip()
+                  if not line or line.startswith("#") or "=" not in line:
+                      continue
+                  k, v = line.split("=", 1)
+                  props[k.strip()] = v.strip()
+
+          plugin_version = props.get("pluginVersion", "").strip()
+          plugin_since_build = props.get("pluginSinceBuild", "").strip()
+
+          # plugin.xml
+          tree = ET.parse("src/main/resources/META-INF/plugin.xml")
+          root = tree.getroot()
+
+          def text(tag, default=""):
+              el = root.find(tag)
+              if el is None or el.text is None:
+                  return default
+              return el.text.strip()
+
+          plugin_id = text("id")
+          plugin_name = text("name", "T3w-Productivity")
+          plugin_vendor = text("vendor", "Unknown")
+
+          base_url = os.environ["R2_PUBLIC_BASE_URL"].rstrip("/")
+          zip_url = f"{base_url}/t3w-productivity.zip"
+
+          xml_content = f"""<plugins>
+            <plugin id="{plugin_id}" url="{zip_url}" version="{plugin_version}">
+              <idea-version since-build="{plugin_since_build}"/>
+              <name>{plugin_name}</name>
+              <vendor>{plugin_vendor}</vendor>
+            </plugin>
+          </plugins>
+          """
+
+          with open("/tmp/updatePlugins.xml", "w", encoding="utf-8", newline="\n") as out:
+              out.write(xml_content)
+          PY
+
+      - name: Configure AWS credentials for Cloudflare R2
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          aws-region: auto
+
+      - name: Upload install/update files to R2 (overwrite)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ENDPOINT="https://${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          BUCKET="${{ secrets.CLOUDFLARE_R2_BUCKET }}"
+
+          aws s3 cp /tmp/t3w-productivity.zip "s3://${BUCKET}/t3w-productivity.zip" \
+            --endpoint-url "${ENDPOINT}" \
+            --cache-control "no-cache"
+
+          aws s3 cp /tmp/updatePlugins.xml "s3://${BUCKET}/updatePlugins.xml" \
+            --endpoint-url "${ENDPOINT}" \
+            --content-type "application/xml" \
+            --cache-control "no-store"
