@@ -6,10 +6,35 @@
 
     <depends>com.intellij.modules.platform</depends>
 
-    <resource-bundle>messages.MyBundle</resource-bundle>
-
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.jefersonsantos06.t3wproductivity.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.jefersonsantos06.t3wproductivity.startup.MyProjectActivity" />
+        <projectConfigurable
+                id="t3w.productivity.flyway.settings"
+                displayName="T3W Productivity"
+                parentId="tools"
+                instance="com.github.jefersonsantos06.t3wproductivity.settings.MainSettingsConfigurable"/>
+        <toolWindow
+                id="T3W Productivity"
+                anchor="right"
+                factoryClass="com.github.jefersonsantos06.t3wproductivity.toolwindow.MainToolWindowFactory"/>
     </extensions>
+
+    <actions>
+        <group id="t3w.productivity.group" text="T3W Productivity" popup="true">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
+
+            <action id="t3w.productivity.createFlywayMigration"
+                    class="com.github.jefersonsantos06.t3wproductivity.actions.FlywayMigrationCreateAction"
+                    text="Criar Migration"/>
+            <action id="t3w.productivity.adjustFlywayMigrationName"
+                    class="com.github.jefersonsantos06.t3wproductivity.actions.FlywayMigrationAdjustNameAction"
+                    text="Ajustar Nome Da Migration"/>
+        </group>
+
+        <group id="t3w.productivity.toolsMenuGroup" text="T3W Productivity" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+
+            <reference ref="t3w.productivity.createFlywayMigration"/>
+        </group>
+    </actions>
 </idea-plugin>
