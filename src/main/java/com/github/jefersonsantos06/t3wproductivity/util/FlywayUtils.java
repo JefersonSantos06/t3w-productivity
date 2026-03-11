@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 public final class FlywayUtils {
 
     private static final Pattern FLYWAY_PATTERN = Pattern.compile("^V\\d{12}__(.+)$");
-    public static final String FLYWAY_DEFAULT_PATH = "src/main/resources/db/migration";
+    public static final String FLYWAY_DEFAULT_PATH = "jbear-vaadin-admin/src/main/java/db/migration";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 
     private FlywayUtils() {
