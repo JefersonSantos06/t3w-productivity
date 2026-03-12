@@ -5,6 +5,7 @@
     <vendor>jefersonsantos06</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <projectConfigurable
@@ -12,10 +13,16 @@
                 displayName="T3W Productivity"
                 parentId="tools"
                 instance="com.github.jefersonsantos06.t3wproductivity.settings.MainSettingsConfigurable"/>
+        <projectConfigurable
+                id="t3w.productivity.flyway.env.settings"
+                displayName="Variaveis de Ambiente"
+                parentId="t3w.productivity.flyway.settings"
+                instance="com.github.jefersonsantos06.t3wproductivity.settings.EnvSettingsConfigurable"/>
         <toolWindow
                 id="T3W Productivity"
                 anchor="right"
                 factoryClass="com.github.jefersonsantos06.t3wproductivity.toolwindow.MainToolWindowFactory"/>
+        <runConfigurationExtension implementation="com.github.jefersonsantos06.t3wproductivity.run.ApplicationEnvironmentRunConfigurationExtension"/>
     </extensions>
 
     <actions>

@@ -14,10 +14,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Optional;
 
+import static com.github.jefersonsantos06.t3wproductivity.util.EnvironmentVariablesUtil.STORE_NAME_PREFX;
 import static com.github.jefersonsantos06.t3wproductivity.util.FlywayUtils.FLYWAY_DEFAULT_PATH;
 
 @Service(Service.Level.PROJECT)
-@State(name = "T3WFlywaySettingsService", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = STORE_NAME_PREFX + "FlywaySettingsService", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class FlywayProjectService implements PersistentStateComponent<FlywayProjectService.State> {
 
     private State state = new State();
