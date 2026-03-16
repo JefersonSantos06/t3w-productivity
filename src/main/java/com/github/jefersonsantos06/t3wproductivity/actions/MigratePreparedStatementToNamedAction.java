@@ -102,7 +102,7 @@ public final class MigratePreparedStatementToNamedAction extends AnAction {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
+        return ActionUpdateThread.BGT;
     }
 
     public static MigrationResult migrate(final String source) {
