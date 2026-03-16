@@ -28,8 +28,11 @@
     <actions>
         <group id="t3w.productivity.group" text="T3W Productivity" popup="true">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
-            <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
 
+            <action id="t3w.productivity.migratePreparedStatementToNamed"
+                    class="com.github.jefersonsantos06.t3wproductivity.actions.MigratePreparedStatementToNamedAction"
+                    text="Migrar PreparedStatement Para Named"/>
             <action id="t3w.productivity.createFlywayMigration"
                     class="com.github.jefersonsantos06.t3wproductivity.actions.FlywayMigrationCreateAction"
                     text="Criar Migration"/>

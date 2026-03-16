@@ -61,6 +61,10 @@ intellijPlatform {
 }
 
 tasks {
+    test {
+        useJUnit()
+    }
+
     wrapper {
         gradleVersion = providers.gradleProperty("gradleVersion").get()
     }
