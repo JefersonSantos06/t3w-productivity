@@ -4,6 +4,7 @@ import com.github.jefersonsantos06.t3wproductivity.listeners.ContentDisposable;
 import com.github.jefersonsantos06.t3wproductivity.listeners.EnvironmentSettingsListener;
 import com.github.jefersonsantos06.t3wproductivity.listeners.FlywaySettingsListener;
 import com.github.jefersonsantos06.t3wproductivity.model.EnvironmentVariable;
+import com.github.jefersonsantos06.t3wproductivity.run.FixedMainClassRunner;
 import com.github.jefersonsantos06.t3wproductivity.services.application.EnvironmentApplicationService;
 import com.github.jefersonsantos06.t3wproductivity.services.project.EnvironmentProjectService;
 import com.github.jefersonsantos06.t3wproductivity.services.project.FlywayProjectService;
@@ -66,6 +67,12 @@ public final class MainToolWindowFactory implements ToolWindowFactory, DumbAware
                 refreshVisibleEnvironmentRows(envService, appService, envModel)
         );
 
+        final var runUsuariosCallbackButton = new JButton("Executar UsuariosCallback");
+        runUsuariosCallbackButton.addActionListener(event -> FixedMainClassRunner.runO02UsuariosCallback(project));
+
+        final var actionsUsuarios = new JPanel(new GridLayout(1, 1, 8, 0));
+        actionsUsuarios.add(runUsuariosCallbackButton);
+
         final var revealDirectoryButton = new JButton("Ver pasta de migrations");
         revealDirectoryButton.addActionListener(event -> migrationService.getMigrationsDirectoryFile(project)
                 .ifPresentOrElse(
@@ -86,6 +93,7 @@ public final class MainToolWindowFactory implements ToolWindowFactory, DumbAware
         envDescription.setForeground(UIUtil.getContextHelpForeground());
 
         final var panel = FormBuilder.createFormBuilder()
+                .addLabeledComponent("Gerenciamento de usuarios", actionsUsuarios, true)
                 .addLabeledComponent("Pasta de migrations:", migrationsDirectoryField, true)
                 .addComponent(actionsPanel2)
                 .setHorizontalGap(10)
