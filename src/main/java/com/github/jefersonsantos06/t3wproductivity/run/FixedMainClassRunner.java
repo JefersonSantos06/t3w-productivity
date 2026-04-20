@@ -6,6 +6,7 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -15,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class FixedMainClassRunner {
 
@@ -35,27 +37,18 @@ public final class FixedMainClassRunner {
             return;
         }
 
-        final var psiClass = JavaPsiFacade.getInstance(project)
-                .findClass(O02_USUARIOS_CALLBACK_FQN, GlobalSearchScope.projectScope(project));
-        if (psiClass == null) {
+        final var resolution = ReadAction.compute(() -> resolveClassAndModule(project));
+        if (!resolution.classFound) {
             Messages.showErrorDialog(
                     project,
                     "Classe nao encontrada: " + O02_USUARIOS_CALLBACK_FQN
-                            + ". Abra o projeto que contem o modulo jbear-vaadin-admin.",
+                    + ". Abra o projeto que contem o modulo jbear-vaadin-admin.",
                     "T3W Productivity"
             );
             return;
         }
 
-        final var containingFile = psiClass.getContainingFile();
-        final var vf = containingFile == null ? null : containingFile.getVirtualFile();
-        Module module = null;
-        if (vf != null) {
-            module = ModuleUtilCore.findModuleForFile(vf, project);
-        }
-        if (module == null) {
-            module = ModuleManager.getInstance(project).findModuleByName(HINT_MODULE_NAME);
-        }
+        final var module = resolution.module;
         if (module == null) {
             Messages.showErrorDialog(
                     project,
@@ -82,6 +75,28 @@ public final class FixedMainClassRunner {
             return;
         }
         ProgramRunnerUtil.executeConfiguration(settings, executor);
+    }
+
+    private static @NotNull ClassResolution resolveClassAndModule(@NotNull final Project project) {
+        final var psiClass = JavaPsiFacade.getInstance(project)
+                .findClass(O02_USUARIOS_CALLBACK_FQN, GlobalSearchScope.projectScope(project));
+        if (psiClass == null) {
+            return new ClassResolution(false, null);
+        }
+
+        final var containingFile = psiClass.getContainingFile();
+        final var vf = containingFile == null ? null : containingFile.getVirtualFile();
+        Module module = null;
+        if (vf != null) {
+            module = ModuleUtilCore.findModuleForFile(vf, project);
+        }
+        if (module == null) {
+            module = ModuleManager.getInstance(project).findModuleByName(HINT_MODULE_NAME);
+        }
+        return new ClassResolution(true, module);
+    }
+
+    private record ClassResolution(boolean classFound, @Nullable Module module) {
     }
 
 }
