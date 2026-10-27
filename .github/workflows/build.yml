@@ -23,6 +23,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      - name: Run tests and verify plugin structure
+        run: ./gradlew check verifyPluginStructure
+
       - name: Build plugin ZIP
         run: ./gradlew buildPlugin
 

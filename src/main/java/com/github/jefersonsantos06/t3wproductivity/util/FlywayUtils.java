@@ -5,15 +5,21 @@ import com.intellij.openapi.ui.Messages;
 import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public final class FlywayUtils {
 
     private static final Pattern FLYWAY_PATTERN = Pattern.compile("^V\\d{12}__(.+)$");
+    private static final Pattern MIGRATION_FILE_PATTERN = Pattern.compile("^V(\\d+(?:[._]\\d+)*)__.+\\.(?i:sql|java)$");
     public static final String FLYWAY_DEFAULT_PATH = "jbear-vaadin-admin/src/main/java/db/migration";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 
@@ -30,7 +36,11 @@ public final class FlywayUtils {
     }
 
     public static String buildVersionPrefix(final String descriptionToken) {
-        return "V" + LocalDateTime.now().format(DATE_FORMAT) + "__" + descriptionToken;
+        return buildVersionPrefix(descriptionToken, LocalDateTime.now());
+    }
+
+    public static String buildVersionPrefix(final String descriptionToken, final LocalDateTime dateTime) {
+        return "V" + dateTime.format(DATE_FORMAT) + "__" + descriptionToken;
     }
 
     public static String buildSqlFileName(final String versionPrefix) {
@@ -79,25 +89,67 @@ public final class FlywayUtils {
         return Optional.of(trimmed + ".sql");
     }
 
-    public static Optional<String> tryUpdateDate(final String currentBaseName) {
+    /**
+     * Descrição a reaproveitar ao renomear: mantém a de um nome já no padrão ou normaliza o nome atual.
+     */
+    public static String extractMigrationDescription(final String currentBaseName) {
         final var matcher = FLYWAY_PATTERN.matcher(currentBaseName);
-        if (!matcher.matches()) {
-            return Optional.empty();
+        if (matcher.matches() && StringUtils.isNotBlank(matcher.group(1))) {
+            return matcher.group(1);
         }
-        final var description = matcher.group(1);
-        if (StringUtils.trimToEmpty(description).isBlank()) {
-            return Optional.empty();
-        }
-        return Optional.of(buildVersionPrefix(description));
+        final var normalized = normalizeDescription(RegExUtils.replaceFirst(currentBaseName, "^V\\d+__", ""));
+        return normalized.isBlank() ? "migration" : normalized;
     }
 
-    public static Optional<String> tryConvertToFlywayPattern(final String currentBaseName) {
-        final var noPrefix = RegExUtils.replaceFirst(currentBaseName, "^V\\d+__", "");
-        final var normalized = normalizeDescription(noPrefix);
-        if (normalized.isBlank()) {
+    /**
+     * Versão Flyway de um arquivo de migration versionada ({@code V<versão>__<descrição>.sql|java}).
+     */
+    public static Optional<String> extractVersion(final String fileName) {
+        if (fileName == null) {
             return Optional.empty();
         }
-        return Optional.of(buildVersionPrefix(normalized));
+        final var matcher = MIGRATION_FILE_PATTERN.matcher(fileName);
+        return matcher.matches() ? Optional.of(matcher.group(1)) : Optional.empty();
+    }
+
+    /**
+     * Compara versões Flyway numericamente por partes (separadas por "." ou "_").
+     */
+    public static int compareVersions(final String left, final String right) {
+        final var leftParts = left.split("[._]");
+        final var rightParts = right.split("[._]");
+        for (int i = 0; i < Math.max(leftParts.length, rightParts.length); i++) {
+            final var leftPart = i < leftParts.length ? new BigInteger(leftParts[i]) : BigInteger.ZERO;
+            final var rightPart = i < rightParts.length ? new BigInteger(rightParts[i]) : BigInteger.ZERO;
+            final var comparison = leftPart.compareTo(rightPart);
+            if (comparison != 0) {
+                return comparison;
+            }
+        }
+        return 0;
+    }
+
+    public static Optional<String> findLatestMigration(final Collection<String> fileNames) {
+        final Comparator<String> byVersion = Comparator.comparing(name -> extractVersion(name).orElseThrow(), FlywayUtils::compareVersions);
+        return fileNames.stream()
+                .filter(name -> extractVersion(name).isPresent())
+                .max(byVersion.thenComparing(Comparator.naturalOrder()));
+    }
+
+    /**
+     * Primeiro minuto a partir de {@code start} cuja versão ainda não é usada por nenhuma migration existente,
+     * evitando versões duplicadas quando mais de uma migration é criada no mesmo minuto.
+     */
+    public static LocalDateTime nextFreeVersionDateTime(final LocalDateTime start, final Collection<String> existingFileNames) {
+        final var usedVersions = existingFileNames.stream()
+                .map(FlywayUtils::extractVersion)
+                .flatMap(Optional::stream)
+                .collect(Collectors.toSet());
+        var candidate = start.truncatedTo(ChronoUnit.MINUTES);
+        while (usedVersions.contains(candidate.format(DATE_FORMAT))) {
+            candidate = candidate.plusMinutes(1);
+        }
+        return candidate;
     }
 
     public static String resolveDirectory(final String configuredDir, final String projectBasePath) {

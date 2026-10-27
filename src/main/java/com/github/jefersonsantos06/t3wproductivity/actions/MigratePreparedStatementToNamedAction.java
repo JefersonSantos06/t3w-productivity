@@ -60,7 +60,7 @@ public final class MigratePreparedStatementToNamedAction extends AnAction {
         if (!selectionModel.hasSelection()) {
             Messages.showWarningDialog(
                     project,
-                    "Selecione um trecho de codigo com PreparedStatement para migrar.",
+                    "Selecione um trecho de código com PreparedStatement para migrar.",
                     "Migrar PreparedStatement Para Named"
             );
             return;
@@ -72,7 +72,7 @@ public final class MigratePreparedStatementToNamedAction extends AnAction {
         if (selectedText == null || selectedText.isBlank()) {
             Messages.showWarningDialog(
                     project,
-                    "A selecao esta vazia.",
+                    "A seleção está vazia.",
                     "Migrar PreparedStatement Para Named"
             );
             return;
@@ -82,7 +82,7 @@ public final class MigratePreparedStatementToNamedAction extends AnAction {
         if (!result.changed()) {
             Messages.showInfoMessage(
                     project,
-                    result.reason() == null ? "Nenhuma alteracao necessaria." : result.reason(),
+                    result.reason() == null ? "Nenhuma alteração necessária." : result.reason(),
                     "Migrar PreparedStatement Para Named"
             );
             return;
@@ -124,7 +124,7 @@ public final class MigratePreparedStatementToNamedAction extends AnAction {
         migrated = cleanupExtraBlankLines(migrated);
 
         final var changed = !Objects.equals(source, migrated);
-        return new MigrationResult(migrated, changed, changed ? null : "Nao foi possivel aplicar transformacao.");
+        return new MigrationResult(migrated, changed, changed ? null : "Não foi possível aplicar a transformação.");
     }
 
     private static NamingContext buildNamingContext(final List<SetterCall> setterCalls, final Map<Integer, String> sqlHintsByIndex) {

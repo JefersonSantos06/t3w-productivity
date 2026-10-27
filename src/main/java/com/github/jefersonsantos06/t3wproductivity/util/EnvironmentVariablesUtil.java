@@ -66,8 +66,18 @@ public final class EnvironmentVariablesUtil {
     }
 
     public static Map<String, String> mergeEnvironment(final Map<String, String> globalEnv, final Map<String, String> projectEnv, boolean keepEmptyValues) {
-        final var merged = new LinkedHashMap<>(sanitizeEnvironmentMap(globalEnv, keepEmptyValues));
-        merged.putAll(sanitizeEnvironmentMap(projectEnv, keepEmptyValues));
+        return mergeEnvironment(keepEmptyValues, globalEnv, projectEnv);
+    }
+
+    /**
+     * Mescla as camadas na ordem recebida: cada camada sobrescreve as anteriores.
+     */
+    @SafeVarargs
+    public static Map<String, String> mergeEnvironment(final boolean keepEmptyValues, final Map<String, String>... layers) {
+        final var merged = new LinkedHashMap<String, String>();
+        for (final var layer : layers) {
+            merged.putAll(sanitizeEnvironmentMap(layer, keepEmptyValues));
+        }
         return merged;
     }
 

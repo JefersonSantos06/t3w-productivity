@@ -15,9 +15,14 @@
                 instance="com.github.jefersonsantos06.t3wproductivity.settings.MainSettingsConfigurable"/>
         <projectConfigurable
                 id="t3w.productivity.flyway.env.settings"
-                displayName="Variaveis de Ambiente"
+                displayName="Variáveis de Ambiente"
                 parentId="t3w.productivity.flyway.settings"
                 instance="com.github.jefersonsantos06.t3wproductivity.settings.EnvSettingsConfigurable"/>
+        <projectConfigurable
+                id="t3w.productivity.env.presets.settings"
+                displayName="Presets de Variáveis"
+                parentId="t3w.productivity.flyway.settings"
+                instance="com.github.jefersonsantos06.t3wproductivity.settings.EnvPresetsConfigurable"/>
         <toolWindow
                 id="T3W Productivity"
                 anchor="right"

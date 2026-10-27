@@ -31,7 +31,7 @@ public final class FixedMainClassRunner {
         if (DumbService.getInstance(project).isDumb()) {
             Messages.showWarningDialog(
                     project,
-                    "Aguarde a indexacao do projeto terminar antes de executar.",
+                    "Aguarde a indexação do projeto terminar antes de executar.",
                     "T3W Productivity"
             );
             return;
@@ -41,8 +41,8 @@ public final class FixedMainClassRunner {
         if (!resolution.classFound) {
             Messages.showErrorDialog(
                     project,
-                    "Classe nao encontrada: " + O02_USUARIOS_CALLBACK_FQN
-                    + ". Abra o projeto que contem o modulo jbear-vaadin-admin.",
+                    "Classe não encontrada: " + O02_USUARIOS_CALLBACK_FQN
+                    + ". Abra o projeto que contém o módulo jbear-vaadin-admin.",
                     "T3W Productivity"
             );
             return;
@@ -52,7 +52,7 @@ public final class FixedMainClassRunner {
         if (module == null) {
             Messages.showErrorDialog(
                     project,
-                    "Nao foi possivel determinar o modulo IntelliJ para " + O02_USUARIOS_CALLBACK_FQN + ".",
+                    "Não foi possível determinar o módulo IntelliJ para " + O02_USUARIOS_CALLBACK_FQN + ".",
                     "T3W Productivity"
             );
             return;
@@ -71,7 +71,7 @@ public final class FixedMainClassRunner {
 
         final var executor = DefaultRunExecutor.getRunExecutorInstance();
         if (executor == null) {
-            Messages.showErrorDialog(project, "Executor Run nao disponivel.", "T3W Productivity");
+            Messages.showErrorDialog(project, "Executor Run não disponível.", "T3W Productivity");
             return;
         }
         ProgramRunnerUtil.executeConfiguration(settings, executor);

@@ -6,14 +6,16 @@ import com.github.jefersonsantos06.t3wproductivity.listeners.FlywaySettingsListe
 import com.github.jefersonsantos06.t3wproductivity.services.application.EnvironmentApplicationService;
 import com.github.jefersonsantos06.t3wproductivity.services.project.EnvironmentProjectService;
 import com.github.jefersonsantos06.t3wproductivity.services.project.FlywayProjectService;
-import com.github.jefersonsantos06.t3wproductivity.util.EnvironmentVariablesUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.FormBuilder;
@@ -50,20 +52,14 @@ public final class MainSettingsConfigurable implements Configurable {
 
     @Override
     public boolean isModified() {
-        final var service = project.getService(FlywayProjectService.class);
-        final var envService = project.getService(EnvironmentProjectService.class);
         if (component == null) {
             return false;
         }
+        final var flywayService = project.getService(FlywayProjectService.class);
+        final var appService = ApplicationManager.getApplication().getService(EnvironmentApplicationService.class);
 
-        final var migrationsModified = !service.getMigrationsDirectory().equals(component.getMigrationsDirectory());
-        if (migrationsModified) {
-            return true;
-        }
-
-        final var availableKeys = component.getAvailableEnvironmentKeys();
-        final var configuredKeys = EnvironmentVariablesUtil.sanitizeVisibleKeys(envService.getVisibleEnvironmentKeys(), availableKeys);
-        return !configuredKeys.equals(component.getVisibleEnvironmentKeys());
+        return !flywayService.getMigrationsDirectory().equals(component.getMigrationsDirectory())
+               || !appService.getVisibleEnvironmentKeys().equals(component.getVisibleEnvironmentKeys());
     }
 
     @Override
@@ -72,16 +68,14 @@ public final class MainSettingsConfigurable implements Configurable {
             return;
         }
         final var flywayService = project.getService(FlywayProjectService.class);
-        final var envService = project.getService(EnvironmentProjectService.class);
+        final var appService = ApplicationManager.getApplication().getService(EnvironmentApplicationService.class);
         final var newMigrationsPath = component.getMigrationsDirectory();
-        final var availableKeys = component.getAvailableEnvironmentKeys();
-        final var visibleKeys = component.getVisibleEnvironmentKeys();
 
         flywayService.setMigrationsDirectory(newMigrationsPath);
-        envService.setVisibleEnvironmentKeys(visibleKeys, availableKeys);
+        appService.setVisibleEnvironmentKeys(component.getVisibleEnvironmentKeys());
 
         FlywaySettingsListener.publish(project, newMigrationsPath);
-        EnvironmentSettingsListener.publish(project);
+        EnvironmentSettingsListener.publish();
     }
 
     @Override
@@ -90,7 +84,7 @@ public final class MainSettingsConfigurable implements Configurable {
             return;
         }
         component.refreshMigrationsDirectory();
-        component.refreshEnvironmentKeys();
+        component.reloadEnvironmentKeys();
     }
 
     @Override
@@ -121,20 +115,16 @@ public final class MainSettingsConfigurable implements Configurable {
             this.visibleKeysList = new JBList<>(visibleKeysModel);
             this.panel = FormBuilder.createFormBuilder()
                     .addLabeledComponent("Pasta de migrations:", migrationsDirectoryField)
-                    .addLabeledComponent("Variaveis visiveis na Tool Window:", createVisibleKeysPanel(), true)
+                    .addLabeledComponent("Variáveis visíveis na Tool Window (globais; vazio = todas):", createVisibleKeysPanel(), true)
                     .addComponentFillVertically(new JPanel(), 0)
                     .getPanel();
 
+            // Outras páginas (ex.: Variáveis de Ambiente) podem aplicar antes desta no mesmo diálogo:
+            // só acrescenta chaves novas, sem descartar a seleção ainda não aplicada aqui.
             contentDisposable = new ContentDisposable();
-            EnvironmentSettingsListener.subscribe(this.project, contentDisposable, this::refreshEnvironmentKeys);
+            EnvironmentSettingsListener.subscribe(this.project, contentDisposable, this::addNewAvailableKeys);
 
-            migrationsDirectoryField.addActionListener(event -> {
-                final var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-                descriptor.setTitle("Pasta De Migrations");
-                descriptor.setDescription("Selecione a pasta onde os arquivos Flyway serao criados.");
-                Optional.ofNullable(FileChooser.chooseFile(descriptor, null, null))
-                        .ifPresent(selected -> migrationsDirectoryField.setText(selected.getPath()));
-            });
+            migrationsDirectoryField.addActionListener(event -> chooseMigrationsDirectory());
 
             availableKeysList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             visibleKeysList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -153,17 +143,6 @@ public final class MainSettingsConfigurable implements Configurable {
             migrationsDirectoryField.setText(flywayService.getMigrationsDirectory());
         }
 
-        public Set<String> getAvailableEnvironmentKeys() {
-            final var all = new LinkedHashSet<String>();
-            for (int i = 0; i < availableKeysModel.getSize(); i++) {
-                all.add(availableKeysModel.getElementAt(i));
-            }
-            for (int i = 0; i < visibleKeysModel.getSize(); i++) {
-                all.add(visibleKeysModel.getElementAt(i));
-            }
-            return all;
-        }
-
         public List<String> getVisibleEnvironmentKeys() {
             final var visible = new ArrayList<String>();
             for (int i = 0; i < visibleKeysModel.getSize(); i++) {
@@ -172,23 +151,40 @@ public final class MainSettingsConfigurable implements Configurable {
             return visible;
         }
 
-        public void refreshEnvironmentKeys() {
-            final var envService = project.getService(EnvironmentProjectService.class);
+        public void reloadEnvironmentKeys() {
             final var appService = ApplicationManager.getApplication().getService(EnvironmentApplicationService.class);
-
-            final var availableKeys = envService.getAvailableEnvironmentKeys(appService.getGlobalEnvironment());
-            final var visibleKeys = envService.getVisibleEnvironmentKeys();
 
             availableKeysModel.clear();
             visibleKeysModel.clear();
 
-            final var sanitizedVisible = EnvironmentVariablesUtil.sanitizeVisibleKeys(visibleKeys, availableKeys);
-            final var visibleSet = new LinkedHashSet<>(sanitizedVisible);
+            appService.getVisibleEnvironmentKeys().forEach(visibleKeysModel::addElement);
+            addNewAvailableKeys();
+        }
 
-            sanitizedVisible.forEach(visibleKeysModel::addElement);
-            availableKeys.stream()
-                    .filter(key -> !visibleSet.contains(key))
+        private void addNewAvailableKeys() {
+            final var envService = project.getService(EnvironmentProjectService.class);
+            envService.getAvailableEnvironmentKeys().stream()
+                    .filter(key -> !contains(visibleKeysModel, key) && !contains(availableKeysModel, key))
                     .forEach(availableKeysModel::addElement);
+        }
+
+        /**
+         * Grava caminho relativo quando a pasta está dentro do projeto, para funcionar em qualquer worktree.
+         */
+        private void chooseMigrationsDirectory() {
+            final var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+            descriptor.setTitle("Pasta De Migrations");
+            descriptor.setDescription("Selecione a pasta onde os arquivos Flyway serão criados.");
+
+            final var baseDir = ProjectUtil.guessProjectDir(project);
+            final var current = project.getService(FlywayProjectService.class).getMigrationsDirectoryFile(project).orElse(baseDir);
+            Optional.ofNullable(FileChooser.chooseFile(descriptor, project, current))
+                    .ifPresent(selected -> migrationsDirectoryField.setText(toProjectRelativePath(selected, baseDir)));
+        }
+
+        private static String toProjectRelativePath(final VirtualFile selected, final VirtualFile baseDir) {
+            final var relative = baseDir == null ? null : VfsUtilCore.getRelativePath(selected, baseDir, '/');
+            return StringUtils.isNotEmpty(relative) ? relative : selected.getPath();
         }
 
         private JPanel createVisibleKeysPanel() {
