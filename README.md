@@ -21,11 +21,20 @@
     são introspectados.
   - Um refresh por vez, esperando a sincronização em andamento; nada roda se a porta do banco/proxy estiver fechada.
     O andamento aparece em notificações e no `idea.log` ("Introspecção agendada").
+- **Web components do Vaadin** (`vaadin-*`) reconhecidos pela IDE, sem precisar de `node_modules`:
+  - HTML: autocomplete de tags e atributos, documentação rápida e sem aviso de tag/atributo desconhecido.
+  - CSS: tags em seletores, `::part(...)`, atributos de estado (`[has-value]`, `[focused]`...) e as custom
+    properties do Lumo em `var(--lumo-...)`.
+  - Funciona no IntelliJ Ultimate (precisa dos plugins JavaScript e CSS habilitados). No Community o plugin carrega
+    normalmente, mas este recurso não tem efeito.
+  - Os dados ficam em `src/main/resources/web-types/vaadin.web-types.json`, gerado para uma versão do Vaadin com
+    `node scripts/generate-vaadin-web-types.mjs <versão>` (padrão 24.8.6).
 
 ## Desenvolvimento
 
 - Rodar plugin em sandbox: `./gradlew runIde` (Windows: `gradlew.bat runIde`)
 - Rodar testes: `./gradlew test`
+- Rodar o plugin / os testes que valem para o IntelliJ Community: `./gradlew runIdeCommunity` / `./gradlew testCommunity`
 - Verificar compatibilidade: `./gradlew verifyPlugin`
 - Empacotar plugin: `./gradlew buildPlugin`
 - Instalar o plugin: `https://pub-10748318660e44e292dde0d6ee0310b3.r2.dev/updatePlugins.xml` 

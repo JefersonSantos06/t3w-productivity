@@ -1,3 +1,4 @@
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
@@ -43,8 +44,33 @@ dependencies {
         // Module Dependencies. Uses `platformBundledModules` property from the gradle.properties file for bundled IntelliJ Platform modules.
         bundledModules(providers.gradleProperty("platformBundledModules").map { it.split(',') })
 
+        // Só para os testes de web-types: no Ultimate é o plugin JavaScript que liga os web-types embutidos ao HTML/CSS.
+        // O plugin não depende de nenhum dos dois em runtime.
+        testBundledPlugin("JavaScript")
+        testBundledPlugin("com.intellij.css")
+
         testFramework(TestFrameworkType.Platform)
         testFramework(TestFrameworkType.Plugin.Java)
+    }
+}
+
+// IntelliJ Community (sem os plugins JavaScript e CSS): ./gradlew runIdeCommunity e ./gradlew testCommunity
+intellijPlatformTesting {
+    runIde.register("runIdeCommunity") {
+        type = IntelliJPlatformType.IntellijIdeaCommunity
+        version = providers.gradleProperty("platformVersion")
+    }
+
+    testIde.register("testCommunity") {
+        type = IntelliJPlatformType.IntellijIdeaCommunity
+        version = providers.gradleProperty("platformVersion")
+
+        task {
+            useJUnit()
+            filter {
+                includeTestsMatching("*.VaadinWebTypesSmokeTest")
+            }
+        }
     }
 }
 
