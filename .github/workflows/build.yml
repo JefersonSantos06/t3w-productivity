@@ -78,6 +78,17 @@ jobs:
           plugin_name = text("name", "T3w-Productivity")
           plugin_vendor = text("vendor", "Unknown")
 
+          # Descrição e "O que há de novo" (CHANGELOG.md) vêm do plugin.xml processado pelo build;
+          # a IDE mostra os dois na tela de instalação/atualização.
+          patched = ET.parse("build/tmp/patchPluginXml/plugin.xml").getroot()
+
+          def cdata(tag):
+              el = patched.find(tag)
+              if el is None or not (el.text or "").strip():
+                  return ""
+              value = el.text.strip().replace("]]>", "]]]]><![CDATA[>")
+              return f"\n    <{tag}><![CDATA[{value}]]></{tag}>"
+
           base_url = os.environ["R2_PUBLIC_BASE_URL"].rstrip("/")
           zip_url = f"{base_url}/t3w-productivity.zip"
 
@@ -85,7 +96,7 @@ jobs:
             <plugin id="{plugin_id}" url="{zip_url}" version="{plugin_version}">
               <idea-version since-build="{plugin_since_build}"/>
               <name>{plugin_name}</name>
-              <vendor>{plugin_vendor}</vendor>
+              <vendor>{plugin_vendor}</vendor>{cdata("description")}{cdata("change-notes")}
             </plugin>
           </plugins>
           """

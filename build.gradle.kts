@@ -1,9 +1,11 @@
+import org.jetbrains.changelog.Changelog
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     id("java") // Java support
     alias(libs.plugins.intelliJPlatform) // IntelliJ Platform Gradle Plugin
+    alias(libs.plugins.changelog) // Gradle Changelog Plugin
 }
 
 group = providers.gradleProperty("pluginGroup").get()
@@ -81,10 +83,29 @@ intellijPlatform {
         version = providers.gradleProperty("pluginVersion")
         description = providers.gradleProperty("pluginDescription")
 
+        // "O que há de novo": seção da versão atual no CHANGELOG.md (ou Unreleased, se ainda não existir)
+        val changelog = project.changelog // variável local por causa do configuration cache
+        changeNotes = providers.gradleProperty("pluginVersion").map { pluginVersion ->
+            with(changelog) {
+                renderItem(
+                    (getOrNull(pluginVersion) ?: getUnreleased())
+                        .withHeader(false)
+                        .withEmptySections(false),
+                    Changelog.OutputType.HTML,
+                )
+            }
+        }
+
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
         }
     }
+}
+
+// Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
+changelog {
+    groups = listOf("Novidades", "Alterações", "Correções")
+    versionPrefix = ""
 }
 
 tasks {

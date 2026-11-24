@@ -46,6 +46,8 @@
     normalmente, mas este recurso não tem efeito.
   - Os dados ficam em `src/main/resources/web-types/vaadin.web-types.json`, gerado para uma versão do Vaadin com
     `node scripts/generate-vaadin-web-types.mjs <versão>` (padrão 24.8.6).
+- **O que há de novo**: as novidades da versão (seção do `CHANGELOG.md`) aparecem na tela de atualização da IDE, numa
+  notificação na primeira abertura de projeto depois de atualizar e em Tools → T3W Productivity → O Que Há De Novo.
 
 ## Desenvolvimento
 
@@ -54,4 +56,9 @@
 - Rodar o plugin / os testes que valem para o IntelliJ Community: `./gradlew runIdeCommunity` / `./gradlew testCommunity`
 - Verificar compatibilidade: `./gradlew verifyPlugin`
 - Empacotar plugin: `./gradlew buildPlugin`
+- Lançar uma versão:
+  1. Descrever as mudanças em `## [Unreleased]` no `CHANGELOG.md` (grupos Novidades, Alterações, Correções).
+  2. Subir `pluginVersion` no `gradle.properties` e rodar `./gradlew patchChangelog` (o Unreleased vira a seção da
+     versão; é ela que aparece no "O que há de novo").
+  3. Fazer merge na `main` e rodar o workflow "Build and Publish Plugin to R2" no GitHub Actions.
 - Instalar o plugin: `https://pub-10748318660e44e292dde0d6ee0310b3.r2.dev/updatePlugins.xml` 
