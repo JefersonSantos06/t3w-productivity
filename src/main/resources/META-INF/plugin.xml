@@ -6,6 +6,7 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>
+    <depends optional="true" config-file="t3w-database.xml">com.intellij.database</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <projectConfigurable
@@ -28,6 +29,11 @@
                 anchor="right"
                 factoryClass="com.github.jefersonsantos06.t3wproductivity.toolwindow.MainToolWindowFactory"/>
         <runConfigurationExtension implementation="com.github.jefersonsantos06.t3wproductivity.run.ApplicationEnvironmentRunConfigurationExtension"/>
+        <!-- Web components do Vaadin no HTML e no CSS; arquivo gerado por scripts/generate-vaadin-web-types.mjs -->
+        <polySymbols.webTypes source="web-types/vaadin.web-types.json" enableByDefault="true"/>
+        <notificationGroup id="T3W Migrations" displayType="BALLOON"/>
+        <editorNotificationProvider implementation="com.github.jefersonsantos06.t3wproductivity.migration.MigrationGuardNotificationProvider"/>
+        <postStartupActivity implementation="com.github.jefersonsantos06.t3wproductivity.migration.MigrationGuardStartupActivity"/>
     </extensions>
 
     <actions>
