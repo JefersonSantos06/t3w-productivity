@@ -6,6 +6,7 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>
+    <depends optional="true" config-file="t3w-database.xml">com.intellij.database</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <projectConfigurable

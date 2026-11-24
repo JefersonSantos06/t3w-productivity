@@ -13,6 +13,14 @@
     do IntelliJ e cria/atualiza um preset por ambiente (exceto TDD e DEV) com `T3W_DEV_AMBIENTE_OVERRIDE=<CODIGO>` e
     `T3W_DEV_DB_NAME=<codigo>`. Regerar só atualiza essas duas chaves; nada é removido.
 - **Migrar PreparedStatement para Named**: refactor do trecho selecionado no editor.
+- **Introspecção automática do banco** (POC; precisa do plugin Database), só para data sources PostgreSQL locais
+  (`localhost`/`127.0.0.1`):
+  - Quando o log de uma execução mostra o resultado do Flyway, o banco migrado é atualizado (refresh incremental, só
+    aquele banco). Sem migrations novas, atualiza uma vez por sessão da IDE quando a versão do Flyway muda.
+  - Cerca de 1 minuto depois de abrir o projeto, bancos do escopo que nunca foram introspectados (ou perderam o cache)
+    são introspectados.
+  - Um refresh por vez, esperando a sincronização em andamento; nada roda se a porta do banco/proxy estiver fechada.
+    O andamento aparece em notificações e no `idea.log` ("Introspecção agendada").
 
 ## Desenvolvimento
 

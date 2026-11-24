@@ -1,0 +1,12 @@
+<!-- Carregado só quando o plugin Database está instalado (ver <depends optional> no plugin.xml). -->
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="T3W Database" displayType="BALLOON"/>
+        <postStartupActivity implementation="com.github.jefersonsantos06.t3wproductivity.database.MissingIntrospectionStartupActivity"/>
+    </extensions>
+
+    <projectListeners>
+        <listener class="com.github.jefersonsantos06.t3wproductivity.database.FlywayIntrospectionExecutionListener"
+                  topic="com.intellij.execution.ExecutionListener"/>
+    </projectListeners>
+</idea-plugin>
