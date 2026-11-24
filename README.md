@@ -12,6 +12,22 @@
   - "Gerar Presets do Ambiente" (página de Presets, aberta a partir do projeto jbear) lê o enum `Ambiente` pelo índice
     do IntelliJ e cria/atualiza um preset por ambiente (exceto TDD e DEV) com `T3W_DEV_AMBIENTE_OVERRIDE=<CODIGO>` e
     `T3W_DEV_DB_NAME=<codigo>`. Regerar só atualiza essas duas chaves; nada é removido.
+- **Avisos de migration** (só avisam, nada é bloqueado), comparando com a branch padrão do remoto (`origin/HEAD`,
+  `origin/master` ou `origin/main`, como está no último fetch):
+  - Editar uma migration que já está na base: ela não chega aos bancos que já a rodaram. Atalhos: criar nova migration e
+    ver a diferença com a base.
+  - Migration da branch com versão anterior à última da base (o Flyway vai ignorá-la) ou com versão duplicada (o Flyway
+    falha). Atalho "Renumerar para agora"; depois de um merge/pull também aparece uma notificação.
+  - Função nova sem o prefixo `t3w_` (funções que já existem na base são ignoradas).
+- **Isolamento por worktree** (ligado por padrão; Settings → Tools → T3W Productivity): cada worktree recebe um slot
+  (1, 2, ...; o checkout principal é 0 e não muda nada). Ao rodar um app numa worktree, o plugin lê o
+  `application.properties` do módulo e injeta `SERVER_PORT` (porta + 100 × slot), `SERVER_SERVLET_SESSION_COOKIE_NAME`
+  (cookie com sufixo `_<slot>`) e `T3W_DEV_DB_APPNAME_PREFIX` (`<worktree>-`). Valores definidos em presets/overrides
+  sempre vencem. O slot aparece (e pode ser trocado) na Tool Window, e o console da execução mostra porta e cookie.
+- **Matriz de ambientes** (aba "Ambientes" da Tool Window): valor de cada ambiente para cada método do enum `Ambiente`
+  que decide por `switch (this)`, além dos argumentos do construtor. Valores vindos do `default` em cinza itálico e
+  ambientes não tratados em vermelho. Filtros: um ambiente específico (mostra todos os valores dele), busca por
+  método/valor e "só valores vindos do default". Duplo clique abre o código.
 - **Migrar PreparedStatement para Named**: refactor do trecho selecionado no editor.
 - **Introspecção automática do banco** (POC; precisa do plugin Database), só para data sources PostgreSQL locais
   (`localhost`/`127.0.0.1`):

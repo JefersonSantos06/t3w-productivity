@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.FormBuilder;
@@ -60,7 +61,8 @@ public final class MainSettingsConfigurable implements Configurable {
         final var appService = ApplicationManager.getApplication().getService(EnvironmentApplicationService.class);
 
         return !flywayService.getMigrationsDirectory().equals(component.getMigrationsDirectory())
-               || !appService.getVisibleEnvironmentKeys().equals(component.getVisibleEnvironmentKeys());
+               || !appService.getVisibleEnvironmentKeys().equals(component.getVisibleEnvironmentKeys())
+               || appService.isWorktreeIsolationEnabled() != component.isWorktreeIsolationEnabled();
     }
 
     @Override
@@ -74,6 +76,7 @@ public final class MainSettingsConfigurable implements Configurable {
 
         flywayService.setMigrationsDirectory(newMigrationsPath);
         appService.setVisibleEnvironmentKeys(component.getVisibleEnvironmentKeys());
+        appService.setWorktreeIsolationEnabled(component.isWorktreeIsolationEnabled());
 
         FlywaySettingsListener.publish(project, newMigrationsPath);
         EnvironmentSettingsListener.publish();
@@ -86,6 +89,7 @@ public final class MainSettingsConfigurable implements Configurable {
         }
         component.refreshMigrationsDirectory();
         component.reloadEnvironmentKeys();
+        component.reloadWorktreeIsolation();
     }
 
     @Override
@@ -104,6 +108,7 @@ public final class MainSettingsConfigurable implements Configurable {
         private final DefaultListModel<String> visibleKeysModel;
         private final JBList<String> availableKeysList;
         private final JBList<String> visibleKeysList;
+        private final JBCheckBox worktreeIsolationCheckBox;
         private final Project project;
         private ContentDisposable contentDisposable;
 
@@ -114,8 +119,11 @@ public final class MainSettingsConfigurable implements Configurable {
             this.visibleKeysModel = new DefaultListModel<>();
             this.availableKeysList = new JBList<>(availableKeysModel);
             this.visibleKeysList = new JBList<>(visibleKeysModel);
+            this.worktreeIsolationCheckBox = new JBCheckBox(
+                    "Isolar porta, cookie de sessão e ApplicationName dos apps rodando em worktrees (global)");
             this.panel = FormBuilder.createFormBuilder()
                     .addLabeledComponent("Pasta de migrations:", migrationsDirectoryField)
+                    .addComponent(worktreeIsolationCheckBox)
                     .addLabeledComponent("Variáveis visíveis na Tool Window (globais; vazio = todas):", createVisibleKeysPanel(), true)
                     .addComponentFillVertically(new JPanel(), 0)
                     .getPanel();
@@ -137,6 +145,15 @@ public final class MainSettingsConfigurable implements Configurable {
 
         public String getMigrationsDirectory() {
             return StringUtils.trimToEmpty(migrationsDirectoryField.getText());
+        }
+
+        public boolean isWorktreeIsolationEnabled() {
+            return worktreeIsolationCheckBox.isSelected();
+        }
+
+        public void reloadWorktreeIsolation() {
+            final var appService = ApplicationManager.getApplication().getService(EnvironmentApplicationService.class);
+            worktreeIsolationCheckBox.setSelected(appService.isWorktreeIsolationEnabled());
         }
 
         public void refreshMigrationsDirectory() {

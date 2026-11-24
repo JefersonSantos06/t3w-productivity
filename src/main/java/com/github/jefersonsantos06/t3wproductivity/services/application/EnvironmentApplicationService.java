@@ -3,6 +3,7 @@ package com.github.jefersonsantos06.t3wproductivity.services.application;
 import com.github.jefersonsantos06.t3wproductivity.model.EnvironmentPreset;
 import com.github.jefersonsantos06.t3wproductivity.services.state.EnvironmentState;
 import com.github.jefersonsantos06.t3wproductivity.util.EnvironmentVariablesUtil;
+import com.github.jefersonsantos06.t3wproductivity.util.WorktreeIsolationUtils;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
@@ -10,6 +11,8 @@ import com.intellij.openapi.components.Storage;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.github.jefersonsantos06.t3wproductivity.util.EnvironmentVariablesUtil.STORE_NAME_PREFX;
@@ -64,6 +67,31 @@ public final class EnvironmentApplicationService implements PersistentStateCompo
 
     public void setVisibleEnvironmentKeys(final Collection<String> visibleEnvironmentKeys) {
         getState().setVisibleEnvironmentKeys(EnvironmentVariablesUtil.sanitizeVisibleKeys(visibleEnvironmentKeys));
+    }
+
+    public boolean isWorktreeIsolationEnabled() {
+        return getState().isWorktreeIsolationEnabled();
+    }
+
+    public void setWorktreeIsolationEnabled(final boolean enabled) {
+        getState().setWorktreeIsolationEnabled(enabled);
+    }
+
+    /**
+     * Slot da worktree, atribuindo o menor livre na primeira vez. Worktrees que não existem mais liberam o slot.
+     */
+    public synchronized int getWorktreeSlot(final String worktreePath) {
+        final var slots = new LinkedHashMap<>(Optional.ofNullable(getState().getWorktreeSlots()).orElseGet(Map::of));
+        slots.keySet().removeIf(path -> !path.equals(worktreePath) && !Files.isDirectory(Path.of(path)));
+        final var slot = WorktreeIsolationUtils.assignSlot(slots, worktreePath);
+        getState().setWorktreeSlots(slots);
+        return slot;
+    }
+
+    public synchronized void setWorktreeSlot(final String worktreePath, final int slot) {
+        final var slots = new LinkedHashMap<>(Optional.ofNullable(getState().getWorktreeSlots()).orElseGet(Map::of));
+        slots.put(worktreePath, slot);
+        getState().setWorktreeSlots(slots);
     }
 
     private static List<EnvironmentPreset> sanitizePresets(final Collection<EnvironmentPreset> presets) {

@@ -35,6 +35,13 @@ public final class AmbientePresetUtils {
      * Prefere o fonte (worktree atual) ao jar; do jar só é possível ler o nome da constante.
      */
     public static Optional<List<AmbienteConstant>> readAmbientes(final Project project) {
+        return findAmbienteClass(project).map(AmbientePresetUtils::readConstants);
+    }
+
+    /**
+     * O enum {@code Ambiente}, preferindo o fonte ao jar. Deve ser chamado em read action e fora do dumb mode.
+     */
+    public static Optional<PsiClass> findAmbienteClass(final Project project) {
         final var facade = JavaPsiFacade.getInstance(project);
         final var scope = GlobalSearchScope.allScope(project);
         for (final var fqn : AMBIENTE_FQNS) {
@@ -43,7 +50,7 @@ public final class AmbientePresetUtils {
                     .filter(PsiClass::isEnum)
                     .min(Comparator.comparing(psiClass -> psiClass instanceof PsiCompiledElement));
             if (ambienteClass.isPresent()) {
-                return Optional.of(readConstants(ambienteClass.get()));
+                return ambienteClass;
             }
         }
         return Optional.empty();
