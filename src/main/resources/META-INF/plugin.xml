@@ -28,6 +28,8 @@
                 anchor="right"
                 factoryClass="com.github.jefersonsantos06.t3wproductivity.toolwindow.MainToolWindowFactory"/>
         <runConfigurationExtension implementation="com.github.jefersonsantos06.t3wproductivity.run.ApplicationEnvironmentRunConfigurationExtension"/>
+        <!-- Web components do Vaadin no HTML e no CSS; arquivo gerado por scripts/generate-vaadin-web-types.mjs -->
+        <polySymbols.webTypes source="web-types/vaadin.web-types.json" enableByDefault="true"/>
     </extensions>
 
     <actions>
