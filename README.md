@@ -19,11 +19,12 @@
   - Migration da branch com versão anterior à última da base (o Flyway vai ignorá-la) ou com versão duplicada (o Flyway
     falha). Atalho "Renumerar para agora"; depois de um merge/pull também aparece uma notificação.
   - Função nova sem o prefixo `t3w_` (funções que já existem na base são ignoradas).
-- **Isolamento por worktree** (ligado por padrão; Settings → Tools → T3W Productivity): cada worktree recebe um slot
+- **Isolamento por worktree** (desligado por padrão; ative em Settings → Tools → T3W Productivity): cada worktree recebe um slot
   (1, 2, ...; o checkout principal é 0 e não muda nada). Ao rodar um app numa worktree, o plugin lê o
   `application.properties` do módulo e injeta `SERVER_PORT` (porta + 100 × slot), `SERVER_SERVLET_SESSION_COOKIE_NAME`
   (cookie com sufixo `_<slot>`) e `T3W_DEV_DB_APPNAME_PREFIX` (`<worktree>-`). Valores definidos em presets/overrides
-  sempre vencem. O slot aparece (e pode ser trocado) na Tool Window, e o console da execução mostra porta e cookie.
+  sempre vencem. Com ele ligado, o slot aparece (e pode ser trocado) na Tool Window, e o console da execução mostra
+  porta e cookie.
 - **Matriz de ambientes** (aba "Ambientes" da Tool Window): valor de cada ambiente para cada método do enum `Ambiente`
   que decide por `switch (this)`, além dos argumentos do construtor. Valores vindos do `default` em cinza itálico e
   ambientes não tratados em vermelho. Filtros: um ambiente específico (mostra todos os valores dele), busca por

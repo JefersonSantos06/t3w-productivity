@@ -2,6 +2,7 @@ package com.github.jefersonsantos06.t3wproductivity.toolwindow;
 
 import com.github.jefersonsantos06.t3wproductivity.ambiente.AmbienteMatrixPanel;
 import com.github.jefersonsantos06.t3wproductivity.listeners.ContentDisposable;
+import com.github.jefersonsantos06.t3wproductivity.listeners.EnvironmentSettingsListener;
 import com.github.jefersonsantos06.t3wproductivity.listeners.FlywaySettingsListener;
 import com.github.jefersonsantos06.t3wproductivity.run.FixedMainClassRunner;
 import com.github.jefersonsantos06.t3wproductivity.run.WorktreeIsolationSupport;
@@ -94,7 +95,7 @@ public final class MainToolWindowFactory implements ToolWindowFactory, DumbAware
                 .setHorizontalGap(10)
                 .setVerticalGap(10)
                 .addLabeledComponent("Preset de variáveis:", environmentPanel.getPresetComponent(), true)
-                .addLabeledComponent("Worktree:", createWorktreeComponent(project), true)
+                .addComponent(createWorktreeComponent(project, disposable))
                 .addComponent(new JBLabel("Variáveis de ambiente:"))
                 .getPanel();
 
@@ -116,9 +117,10 @@ public final class MainToolWindowFactory implements ToolWindowFactory, DumbAware
 
     /**
      * Slot da worktree (porta e cookie de sessão deslocados ao rodar apps) com atalho para trocar o número.
+     * Só aparece com o isolamento ligado nas configurações.
      */
-    private static JComponent createWorktreeComponent(final Project project) {
-        final var label = new JBLabel(WorktreeIsolationSupport.describeProject(project));
+    private static JComponent createWorktreeComponent(final Project project, final Disposable disposable) {
+        final var label = new JBLabel();
         final var changeSlot = new ActionLink("Alterar slot", event -> {
             final var basePath = project.getBasePath();
             if (basePath == null) {
@@ -147,9 +149,21 @@ public final class MainToolWindowFactory implements ToolWindowFactory, DumbAware
                 label.setText(WorktreeIsolationSupport.describeProject(project));
             }
         });
-        final var component = new JPanel(new BorderLayout(JBUI.scale(8), 0));
-        component.add(label, BorderLayout.CENTER);
-        component.add(changeSlot, BorderLayout.EAST);
+        final var slotRow = new JPanel(new BorderLayout(JBUI.scale(8), 0));
+        slotRow.add(label, BorderLayout.CENTER);
+        slotRow.add(changeSlot, BorderLayout.EAST);
+
+        final var component = new JPanel(new BorderLayout(0, JBUI.scale(4)));
+        component.add(new JBLabel("Worktree:"), BorderLayout.NORTH);
+        component.add(slotRow, BorderLayout.CENTER);
+
+        final Runnable refresh = () -> {
+            final var appService = ApplicationManager.getApplication().getService(EnvironmentApplicationService.class);
+            component.setVisible(appService.isWorktreeIsolationEnabled());
+            label.setText(WorktreeIsolationSupport.describeProject(project));
+        };
+        refresh.run();
+        EnvironmentSettingsListener.subscribe(project, disposable, refresh::run);
         return component;
     }
 

@@ -46,7 +46,8 @@ public final class EnvironmentState {
         private Map<String, String> globalEnvironment = new LinkedHashMap<>();
         private List<EnvironmentPreset> presets = new ArrayList<>();
         private List<String> visibleEnvironmentKeys = new ArrayList<>();
-        private boolean worktreeIsolationEnabled = true;
+        // Desligado por padrão: nem todo mundo roda apps em várias worktrees ao mesmo tempo.
+        private boolean worktreeIsolationEnabled = false;
         /**
          * Pasta da worktree -> slot (1, 2, ...). O checkout principal não entra: é sempre o slot 0.
          */

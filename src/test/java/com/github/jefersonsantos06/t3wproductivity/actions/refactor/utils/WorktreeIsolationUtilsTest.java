@@ -1,5 +1,6 @@
 package com.github.jefersonsantos06.t3wproductivity.actions.refactor.utils;
 
+import com.github.jefersonsantos06.t3wproductivity.services.state.EnvironmentState;
 import com.github.jefersonsantos06.t3wproductivity.util.WorktreeIsolationUtils;
 import junit.framework.TestCase;
 
@@ -15,6 +16,10 @@ import static com.github.jefersonsantos06.t3wproductivity.util.WorktreeIsolation
 import static com.github.jefersonsantos06.t3wproductivity.util.WorktreeIsolationUtils.SERVER_PORT_KEY;
 
 public class WorktreeIsolationUtilsTest extends TestCase {
+
+    public void testIsolationIsDisabledByDefault() {
+        assertFalse(new EnvironmentState.Global().isWorktreeIsolationEnabled());
+    }
 
     public void testParsesPlainAndPlaceholderPorts() {
         assertEquals(OptionalInt.of(9000), WorktreeIsolationUtils.parsePort("9000"));
