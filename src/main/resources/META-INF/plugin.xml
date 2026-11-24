@@ -34,6 +34,8 @@
         <notificationGroup id="T3W Migrations" displayType="BALLOON"/>
         <editorNotificationProvider implementation="com.github.jefersonsantos06.t3wproductivity.migration.MigrationGuardNotificationProvider"/>
         <postStartupActivity implementation="com.github.jefersonsantos06.t3wproductivity.migration.MigrationGuardStartupActivity"/>
+        <notificationGroup id="T3W Novidades" displayType="STICKY_BALLOON"/>
+        <postStartupActivity implementation="com.github.jefersonsantos06.t3wproductivity.whatsnew.WhatsNewStartupActivity"/>
     </extensions>
 
     <actions>
@@ -56,6 +58,9 @@
             <add-to-group group-id="ToolsMenu" anchor="last"/>
 
             <reference ref="t3w.productivity.createFlywayMigration"/>
+            <action id="t3w.productivity.whatsNew"
+                    class="com.github.jefersonsantos06.t3wproductivity.whatsnew.WhatsNewAction"
+                    text="O Que Há De Novo"/>
         </group>
     </actions>
 </idea-plugin>
