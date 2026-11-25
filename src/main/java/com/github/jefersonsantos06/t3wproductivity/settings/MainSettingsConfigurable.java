@@ -6,7 +6,9 @@ import com.github.jefersonsantos06.t3wproductivity.listeners.FlywaySettingsListe
 import com.github.jefersonsantos06.t3wproductivity.services.application.EnvironmentApplicationService;
 import com.github.jefersonsantos06.t3wproductivity.services.project.EnvironmentProjectService;
 import com.github.jefersonsantos06.t3wproductivity.services.project.FlywayProjectService;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
@@ -121,12 +123,14 @@ public final class MainSettingsConfigurable implements Configurable {
             this.visibleKeysList = new JBList<>(visibleKeysModel);
             this.worktreeIsolationCheckBox = new JBCheckBox(
                     "Isolar porta, cookie de sessão e ApplicationName dos apps rodando em worktrees (global)");
-            this.panel = FormBuilder.createFormBuilder()
-                    .addLabeledComponent("Pasta de migrations:", migrationsDirectoryField)
-                    .addComponent(worktreeIsolationCheckBox)
-                    .addLabeledComponent("Variáveis visíveis na Tool Window (globais; vazio = todas):", createVisibleKeysPanel(), true)
-                    .addComponentFillVertically(new JPanel(), 0)
-                    .getPanel();
+            final var form = FormBuilder.createFormBuilder()
+                    .addLabeledComponent("Pasta de migrations:", migrationsDirectoryField);
+            // Sem Java (ex.: DataGrip) não há run configurations nem tool window: só a pasta de migrations.
+            if (PluginManagerCore.isPluginInstalled(PluginId.getId("com.intellij.java"))) {
+                form.addComponent(worktreeIsolationCheckBox)
+                        .addLabeledComponent("Variáveis visíveis na Tool Window (globais; vazio = todas):", createVisibleKeysPanel(), true);
+            }
+            this.panel = form.addComponentFillVertically(new JPanel(), 0).getPanel();
 
             // Outras páginas (ex.: Variáveis de Ambiente) podem aplicar antes desta no mesmo diálogo:
             // só acrescenta chaves novas, sem descartar a seleção ainda não aplicada aqui.

@@ -4,8 +4,9 @@
     <name>T3w-Productivity</name>
     <vendor>jefersonsantos06</vendor>
 
+    <!-- Só a plataforma é obrigatória, para o plugin rodar também no DataGrip (sem Java). -->
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.java</depends>
+    <depends optional="true" config-file="t3w-java.xml">com.intellij.modules.java</depends>
     <depends optional="true" config-file="t3w-database.xml">com.intellij.database</depends>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -14,21 +15,6 @@
                 displayName="T3W Productivity"
                 parentId="tools"
                 instance="com.github.jefersonsantos06.t3wproductivity.settings.MainSettingsConfigurable"/>
-        <projectConfigurable
-                id="t3w.productivity.flyway.env.settings"
-                displayName="Variáveis de Ambiente"
-                parentId="t3w.productivity.flyway.settings"
-                instance="com.github.jefersonsantos06.t3wproductivity.settings.EnvSettingsConfigurable"/>
-        <projectConfigurable
-                id="t3w.productivity.env.presets.settings"
-                displayName="Presets de Variáveis"
-                parentId="t3w.productivity.flyway.settings"
-                instance="com.github.jefersonsantos06.t3wproductivity.settings.EnvPresetsConfigurable"/>
-        <toolWindow
-                id="T3W Productivity"
-                anchor="right"
-                factoryClass="com.github.jefersonsantos06.t3wproductivity.toolwindow.MainToolWindowFactory"/>
-        <runConfigurationExtension implementation="com.github.jefersonsantos06.t3wproductivity.run.ApplicationEnvironmentRunConfigurationExtension"/>
         <!-- Web components do Vaadin no HTML e no CSS; arquivo gerado por scripts/generate-vaadin-web-types.mjs -->
         <polySymbols.webTypes source="web-types/vaadin.web-types.json" enableByDefault="true"/>
         <notificationGroup id="T3W Migrations" displayType="BALLOON"/>
@@ -38,14 +24,17 @@
         <postStartupActivity implementation="com.github.jefersonsantos06.t3wproductivity.whatsnew.WhatsNewStartupActivity"/>
     </extensions>
 
+    <projectListeners>
+        <!-- Grava o resultado do Flyway para as IDEs com o plugin Database (esta ou outra, ex.: DataGrip). -->
+        <listener class="com.github.jefersonsantos06.t3wproductivity.database.FlywayIntrospectionExecutionListener"
+                  topic="com.intellij.execution.ExecutionListener"/>
+    </projectListeners>
+
     <actions>
         <group id="t3w.productivity.group" text="T3W Productivity" popup="true">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="WeighingNewGroup"/>
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
 
-            <action id="t3w.productivity.migratePreparedStatementToNamed"
-                    class="com.github.jefersonsantos06.t3wproductivity.actions.MigratePreparedStatementToNamedAction"
-                    text="Migrar PreparedStatement Para Named"/>
             <action id="t3w.productivity.createFlywayMigration"
                     class="com.github.jefersonsantos06.t3wproductivity.actions.FlywayMigrationCreateAction"
                     text="Criar Migration"/>

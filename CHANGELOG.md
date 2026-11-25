@@ -6,6 +6,9 @@
 
 ### Novidades
 
+- Suporte ao DataGrip: o plugin instala sem Java e traz migrations Flyway, introspecção automática e "O que há de novo".
+- Introspecção entre IDEs: o app rodando no IntelliJ atualiza os data sources do DataGrip depois do Flyway.
+
 ### Alterações
 
 ### Correções
