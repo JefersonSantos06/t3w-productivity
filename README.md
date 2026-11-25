@@ -3,8 +3,8 @@
 - **IntelliJ IDEA** (com ou sem assinatura Ultimate, e o antigo Community): todas as funções. A introspecção precisa do
   plugin Database, que não existe no Community 2025.2.
 - **DataGrip**: migrations Flyway (criar, ajustar nome e avisos, com a pasta do projeto aberta), introspecção automática
-  e "O que há de novo". Variáveis de ambiente, isolamento por worktree, matriz de ambientes e o refactor de
-  PreparedStatement dependem de Java e não aparecem.
+  e "O que há de novo". Variáveis de ambiente, isolamento por worktree, matriz de ambientes, o refactor de
+  PreparedStatement e os pontos de exceção dependem de Java e não aparecem.
 
 ## Funcionalidades
 
@@ -38,6 +38,25 @@
   ambientes não tratados em vermelho. Filtros: um ambiente específico (mostra todos os valores dele), busca por
   método/valor e "só valores vindos do default". Duplo clique abre o código.
 - **Migrar PreparedStatement para Named**: refactor do trecho selecionado no editor.
+- **Pontos de exceção** (debug Java, só no IntelliJ): simulam uma exceção numa linha sem mexer no código, para testar o
+  tratamento de erros.
+  - No editor, na linha desejada: botão direito → T3W Productivity → Adicionar Ponto De Exceção. A exceção é uma
+    expressão Java avaliada no contexto da linha (pode usar variáveis locais); o padrão é
+    `new RuntimeException("T3W: exceção de teste")`. Para mudar a expressão, rode a ação de novo na mesma linha ou edite
+    o campo "Evaluate and log" do breakpoint (como num logpoint, mas a expressão é lançada em vez de logada).
+  - Rodando em debug, toda vez que a linha vai executar a exceção é lançada na thread e o app segue sem pausar (o
+    breakpoint é "não suspender"). Condição e contagem de passagens do breakpoint também valem.
+  - O ponto aparece com o ícone de raio no gutter e no grupo "Pontos De Exceção T3W" da janela Breakpoints
+    (⌘⇧F8 / Ctrl+Shift+F8). Para desligar, desmarque o checkbox do ponto ou do grupo, inclusive com a sessão rodando.
+    Para remover, apague o breakpoint.
+  - Exceções checadas são lançadas mesmo que o método não as declare (`throws`). A JVM não confere isso, então o
+    chamador pode receber, por exemplo, uma `IOException` que o compilador diria impossível.
+  - Usa o mesmo mecanismo da ação nativa "Throw Exception" do debugger (`ThreadReference.stop` do JDWP), que continua
+    funcionando no JDK 20+ (onde `Thread.stop()` só lança `UnsupportedOperationException`). Testado com o app no JDK 21
+    e no 25, em threads comuns e virtuais.
+  - Limitação do JDK: numa thread comum (de plataforma), a JVM deixa a thread interrompida junto com a exceção. Depois
+    de tratá-la, a próxima chamada bloqueante dessa thread (`sleep`, `wait`, `join`, `BlockingQueue.take`...) lança
+    `InterruptedException`. Threads virtuais não ficam interrompidas. A ação nativa "Throw Exception" tem o mesmo efeito.
 - **Introspecção automática do banco** (precisa do plugin Database), só para data sources PostgreSQL locais
   (`localhost`/`127.0.0.1`):
   - Quando o log de uma execução mostra o resultado do Flyway, o banco migrado é atualizado (refresh incremental, só

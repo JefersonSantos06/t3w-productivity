@@ -8,6 +8,9 @@
 
 - Suporte ao DataGrip: o plugin instala sem Java e traz migrations Flyway, introspecção automática e "O que há de novo".
 - Introspecção entre IDEs: o app rodando no IntelliJ atualiza os data sources do DataGrip depois do Flyway.
+- Pontos de exceção (debug Java): "Adicionar Ponto De Exceção" no menu do editor cria um breakpoint que lança a exceção
+  escolhida na linha e segue sem pausar, para testar o tratamento de erros sem mexer no código. Liga e desliga pelo
+  checkbox na janela Breakpoints.
 
 ### Alterações
 
