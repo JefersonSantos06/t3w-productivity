@@ -40,10 +40,12 @@
 - **Migrar PreparedStatement para Named**: refactor do trecho selecionado no editor.
 - **Pontos de exceção** (debug Java, só no IntelliJ): simulam uma exceção numa linha sem mexer no código, para testar o
   tratamento de erros.
-  - No editor, na linha desejada: botão direito → T3W Productivity → Adicionar Ponto De Exceção. A exceção é uma
-    expressão Java avaliada no contexto da linha (pode usar variáveis locais); o padrão é
-    `new RuntimeException("T3W: exceção de teste")`. Para mudar a expressão, rode a ação de novo na mesma linha ou edite
-    o campo "Evaluate and log" do breakpoint (como num logpoint, mas a expressão é lançada em vez de logada).
+  - Para criar: botão direito no número da linha (gutter) → Adicionar Ponto De Exceção, junto de "Add Breakpoint" e
+    "Add Logging Breakpoint" (New UI); ou, no editor, botão direito → T3W Productivity → Adicionar Ponto De Exceção,
+    que usa a linha do cursor. A exceção é uma expressão Java avaliada no contexto da linha (pode usar variáveis
+    locais); o padrão é `new RuntimeException("T3W: exceção de teste")`. Para mudar a expressão, rode a ação de novo
+    na mesma linha ou edite o campo "Evaluate and log" do breakpoint (como num logpoint, mas a expressão é lançada em
+    vez de logada).
   - Rodando em debug, toda vez que a linha vai executar a exceção é lançada na thread e o app segue sem pausar (o
     breakpoint é "não suspender"). Condição e contagem de passagens do breakpoint também valem.
   - O ponto aparece com o ícone de raio no gutter e no grupo "Pontos De Exceção T3W" da janela Breakpoints

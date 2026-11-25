@@ -2,6 +2,9 @@ package com.github.jefersonsantos06.t3wproductivity.exceptionpoint;
 
 import com.intellij.debugger.DebuggerTestCase;
 import com.intellij.debugger.impl.OutputChecker;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUiKind;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
@@ -15,12 +18,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.TestActionEvent;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 
+import javax.swing.JComponent;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -34,23 +37,24 @@ public class ExceptionPointDebuggerTest extends DebuggerTestCase {
     private final StringBuilder output = new StringBuilder();
 
     public void testThrowsDefaultExceptionWithoutPausing() throws Exception {
-        assertEquals(SuspendPolicy.NONE, addExceptionPoint(ExceptionPointType.DEFAULT_EXCEPTION).getSuspendPolicy());
+        assertEquals(SuspendPolicy.NONE, addExceptionPoint(ExceptionPointType.DEFAULT_EXCEPTION, ActionPlaces.EDITOR_POPUP).getSuspendPolicy());
         createLocalProcess(APP);
     }
 
+    /** Criado pelo menu do gutter: vale a linha sob o mouse, não a do cursor. */
     public void testThrowsCheckedExceptionNotDeclaredByTheMethod() throws Exception {
-        addExceptionPoint("new java.io.IOException(\"checada \" + i)");
+        addExceptionPoint("new java.io.IOException(\"checada \" + i)", ActionPlaces.EDITOR_GUTTER_POPUP);
         createLocalProcess(APP);
     }
 
     public void testDisabledPointDoesNotThrow() throws Exception {
-        addExceptionPoint(ExceptionPointType.DEFAULT_EXCEPTION).setEnabled(false);
+        addExceptionPoint(ExceptionPointType.DEFAULT_EXCEPTION, ActionPlaces.EDITOR_POPUP).setEnabled(false);
         createLocalProcess(APP);
     }
 
     /** Pausa num breakpoint comum antes do run(2), desabilita o ponto e segue. */
     public void testDisablingDuringTheSessionStopsTheException() throws Exception {
-        final var point = addExceptionPoint(ExceptionPointType.DEFAULT_EXCEPTION);
+        final var point = addExceptionPoint(ExceptionPointType.DEFAULT_EXCEPTION, ActionPlaces.EDITOR_POPUP);
         final var type = XDebuggerUtil.getInstance().findBreakpointType(JavaLineBreakpointType.class);
         final int line = lineOf("        run(2);");
         EdtTestUtil.runInEdtAndWait(() -> WriteAction.run(() -> XDebuggerManager.getInstance(myProject)
@@ -86,22 +90,28 @@ public class ExceptionPointDebuggerTest extends DebuggerTestCase {
         }
     }
 
-    /** Roda a ação na linha marcada com "ponto de exceção", respondendo o diálogo com a expressão. */
-    private XBreakpoint<?> addExceptionPoint(final String exception) throws IOException {
+    /**
+     * Roda a ação na linha marcada com "ponto de exceção", respondendo o diálogo com a expressão. Pelo menu do editor a
+     * linha é a do cursor (o hover do gutter aponta para outra); pelo menu do gutter, a do hover (o cursor fica em outra).
+     */
+    private XBreakpoint<?> addExceptionPoint(final String exception, final String place) throws IOException {
         final var file = appFile();
         final int line = lineOf("        System.out.println(\"trabalhando \" + i); // ponto de exceção");
+        final boolean fromGutter = ActionPlaces.EDITOR_GUTTER_POPUP.equals(place);
         final var previousDialog = TestDialogManager.setTestInputDialog(message -> exception);
         try {
             EdtTestUtil.runInEdtAndWait(() -> {
                 final var editor = FileEditorManager.getInstance(myProject)
-                        .openTextEditor(new OpenFileDescriptor(myProject, file, line, 0), false);
+                        .openTextEditor(new OpenFileDescriptor(myProject, file, fromGutter ? 0 : line, 0), false);
+                ((JComponent) editor.getGutter()).putClientProperty("active.line.number", fromGutter ? line : 0);
                 final var context = SimpleDataContext.builder()
                         .add(CommonDataKeys.PROJECT, myProject)
                         .add(CommonDataKeys.EDITOR, editor)
                         .add(CommonDataKeys.VIRTUAL_FILE, file)
                         .build();
                 final var action = new AddExceptionPointAction();
-                action.actionPerformed(TestActionEvent.createTestEvent(action, context));
+                action.actionPerformed(AnActionEvent.createEvent(
+                        context, action.getTemplatePresentation().clone(), place, ActionUiKind.POPUP, null));
             });
         } finally {
             TestDialogManager.setTestInputDialog(previousDialog);

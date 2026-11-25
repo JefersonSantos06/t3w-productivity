@@ -1,10 +1,12 @@
 package com.github.jefersonsantos06.t3wproductivity.exceptionpoint;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,7 +17,9 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
-/** Cria (ou edita) o ponto de exceção da linha do cursor. */
+import javax.swing.JComponent;
+
+/** Cria (ou edita) o ponto de exceção da linha do cursor (menu do editor) ou da linha clicada (menu do gutter). */
 public final class AddExceptionPointAction extends AnAction {
 
     private static final String TITLE = "Adicionar Ponto De Exceção";
@@ -28,7 +32,7 @@ public final class AddExceptionPointAction extends AnAction {
         if (project == null || editor == null || file == null) {
             return;
         }
-        final int line = editor.getCaretModel().getLogicalPosition().line;
+        final int line = lineOf(event, editor);
         final var type = XDebuggerUtil.getInstance().findBreakpointType(ExceptionPointType.class);
         if (!type.canAddAt(file, line, project)) {
             Messages.showWarningDialog(project, "Coloque o cursor numa linha com código executável.", TITLE);
@@ -50,6 +54,19 @@ public final class AddExceptionPointAction extends AnAction {
             breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
             breakpoint.setLogExpression(exception.strip());
         });
+    }
+
+    /**
+     * No menu do gutter, a linha sob o mouse: o gutter guarda em "active.line.number" enquanto mostra o hover, e o
+     * "Add Breakpoint" nativo lê de lá (2025.2 e 2026.3). No menu do editor, ou se a chave sumir, a linha do cursor.
+     */
+    private static int lineOf(final AnActionEvent event, final Editor editor) {
+        if (!ActionPlaces.EDITOR_POPUP.equals(event.getPlace())
+                && editor.getGutter() instanceof final JComponent gutter
+                && gutter.getClientProperty("active.line.number") instanceof final Integer line) {
+            return line;
+        }
+        return editor.getCaretModel().getLogicalPosition().line;
     }
 
     @Override

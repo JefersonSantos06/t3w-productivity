@@ -30,6 +30,8 @@
                 class="com.github.jefersonsantos06.t3wproductivity.exceptionpoint.AddExceptionPointAction"
                 text="Adicionar Ponto De Exceção">
             <add-to-group group-id="t3w.productivity.group" anchor="last"/>
+            <!-- Menu de botão direito no gutter (New UI), junto de Add Breakpoint / Add Logging Breakpoint -->
+            <add-to-group group-id="XDebugger.Hover.Breakpoint.Context.Menu" anchor="last"/>
         </action>
     </actions>
 </idea-plugin>
