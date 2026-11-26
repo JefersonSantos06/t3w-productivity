@@ -22,6 +22,7 @@ public class OptionalDependenciesSmokeTest extends BasePlatformTestCase {
         assertNotNull(actions.getAction("t3w.productivity.whatsNew"));
         assertNotNull(actions.getAction("t3w.productivity.createFlywayMigration"));
         assertEquals(hasJava, actions.getAction("t3w.productivity.migratePreparedStatementToNamed") != null);
+        assertEquals(hasJava, actions.getAction("t3w.productivity.addExceptionPoint") != null);
         assertEquals(hasJava, ToolWindowEP.EP_NAME.getExtensionList().stream().anyMatch(ep -> "T3W Productivity".equals(ep.id)));
         assertEquals(hasDatabase, NotificationGroupManager.getInstance().getNotificationGroup("T3W Database") != null);
     }
