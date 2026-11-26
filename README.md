@@ -1,3 +1,11 @@
+## IDEs
+
+- **IntelliJ IDEA** (com ou sem assinatura Ultimate, e o antigo Community): todas as funções. A introspecção precisa do
+  plugin Database, que não existe no Community 2025.2.
+- **DataGrip**: migrations Flyway (criar, ajustar nome e avisos, com a pasta do projeto aberta), introspecção automática
+  e "O que há de novo". Variáveis de ambiente, isolamento por worktree, matriz de ambientes e o refactor de
+  PreparedStatement dependem de Java e não aparecem.
+
 ## Funcionalidades
 
 - **Migrations Flyway**: criar migration (`V<yyyyMMddHHmm>__<descricao>.sql`), ajustar nome de uma migration existente e
@@ -30,10 +38,13 @@
   ambientes não tratados em vermelho. Filtros: um ambiente específico (mostra todos os valores dele), busca por
   método/valor e "só valores vindos do default". Duplo clique abre o código.
 - **Migrar PreparedStatement para Named**: refactor do trecho selecionado no editor.
-- **Introspecção automática do banco** (POC; precisa do plugin Database), só para data sources PostgreSQL locais
+- **Introspecção automática do banco** (precisa do plugin Database), só para data sources PostgreSQL locais
   (`localhost`/`127.0.0.1`):
   - Quando o log de uma execução mostra o resultado do Flyway, o banco migrado é atualizado (refresh incremental, só
     aquele banco). Sem migrations novas, atualiza uma vez por sessão da IDE quando a versão do Flyway muda.
+  - Funciona entre IDEs: o app rodando no IntelliJ atualiza também os data sources do DataGrip (com o plugin instalado
+    nos dois). A IDE que roda o app grava o resultado em `~/.t3w-productivity/flyway-events.log`, e as IDEs com o plugin
+    Database verificam o arquivo a cada 2 s.
   - Cerca de 1 minuto depois de abrir o projeto, bancos do escopo que nunca foram introspectados (ou perderam o cache)
     são introspectados.
   - Um refresh por vez, esperando a sincronização em andamento; nada roda se a porta do banco/proxy estiver fechada.
@@ -54,11 +65,14 @@
 - Rodar plugin em sandbox: `./gradlew runIde` (Windows: `gradlew.bat runIde`)
 - Rodar testes: `./gradlew test`
 - Rodar o plugin / os testes que valem para o IntelliJ Community: `./gradlew runIdeCommunity` / `./gradlew testCommunity`
-- Verificar compatibilidade: `./gradlew verifyPlugin`
+- Rodar o plugin / os testes que valem para o DataGrip: `./gradlew runIdeDataGrip` / `./gradlew testDataGrip` (o
+  teste confere que o plugin carrega sem Java; código que usa Java fica no `t3w-java.xml`)
+- Verificar compatibilidade das APIs com o DataGrip: `./gradlew verifyPlugin`
 - Empacotar plugin: `./gradlew buildPlugin`
 - Lançar uma versão:
   1. Descrever as mudanças em `## [Unreleased]` no `CHANGELOG.md` (grupos Novidades, Alterações, Correções).
   2. Subir `pluginVersion` no `gradle.properties` e rodar `./gradlew patchChangelog` (o Unreleased vira a seção da
      versão; é ela que aparece no "O que há de novo").
   3. Fazer merge na `main` e rodar o workflow "Build and Publish Plugin to R2" no GitHub Actions.
-- Instalar o plugin: `https://pub-10748318660e44e292dde0d6ee0310b3.r2.dev/updatePlugins.xml` 
+- Instalar o plugin (IntelliJ ou DataGrip: Settings → Plugins → ⚙ → Manage Plugin Repositories):
+  `https://pub-10748318660e44e292dde0d6ee0310b3.r2.dev/updatePlugins.xml` 

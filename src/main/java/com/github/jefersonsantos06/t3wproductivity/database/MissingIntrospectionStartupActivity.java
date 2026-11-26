@@ -21,6 +21,7 @@ public final class MissingIntrospectionStartupActivity implements ProjectActivit
 
     @Override
     public Object execute(@NotNull final Project project, @NotNull final Continuation<? super Unit> continuation) {
+        FlywayEventWatcher.ensureStarted();
         for (final var delay : CHECK_DELAYS_SECONDS) {
             AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
                 if (!project.isDisposed()) {

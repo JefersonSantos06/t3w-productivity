@@ -1,6 +1,7 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.models.Coordinates
 
 plugins {
     id("java") // Java support
@@ -56,7 +57,8 @@ dependencies {
     }
 }
 
-// IntelliJ Community (sem os plugins JavaScript e CSS): ./gradlew runIdeCommunity e ./gradlew testCommunity
+// IntelliJ Community (sem os plugins JavaScript, CSS e Database): ./gradlew runIdeCommunity e ./gradlew testCommunity
+// DataGrip (sem Java): ./gradlew runIdeDataGrip e ./gradlew testDataGrip. A versão 2025.2.5 existe nos dois produtos.
 intellijPlatformTesting {
     runIde.register("runIdeCommunity") {
         type = IntelliJPlatformType.IntellijIdeaCommunity
@@ -71,8 +73,36 @@ intellijPlatformTesting {
             useJUnit()
             filter {
                 includeTestsMatching("*.VaadinWebTypesSmokeTest")
+                includeTestsMatching("*.OptionalDependenciesSmokeTest")
             }
         }
+    }
+
+    runIde.register("runIdeDataGrip") {
+        type = IntelliJPlatformType.DataGrip
+        version = providers.gradleProperty("platformVersion")
+    }
+
+    testIde.register("testDataGrip") {
+        type = IntelliJPlatformType.DataGrip
+        version = providers.gradleProperty("platformVersion")
+
+        task {
+            useJUnit()
+            filter {
+                includeTestsMatching("*.OptionalDependenciesSmokeTest")
+            }
+        }
+    }
+}
+
+// O DataGrip não traz o testFramework.jar nem o idea_rt.jar (o IntelliJ traz); usa os publicados mais próximos do
+// build dele.
+dependencies {
+    intellijPlatform {
+        testFramework(TestFrameworkType.Platform, configurationName = "intellijPlatformTestDependencies_testDataGrip")
+        testPlatformDependency(Coordinates("com.jetbrains.intellij.java", "java-rt"),
+            configurationName = "intellijPlatformTestDependencies_testDataGrip")
     }
 }
 
@@ -98,6 +128,14 @@ intellijPlatform {
 
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
+        }
+    }
+
+    // ./gradlew verifyPlugin: APIs usadas contra o DataGrip. Ele ignora o que depende do Java (opcional e ausente);
+    // o carregamento sem Java é coberto pelo ./gradlew testDataGrip.
+    pluginVerification {
+        ides {
+            create(IntelliJPlatformType.DataGrip, providers.gradleProperty("platformVersion"))
         }
     }
 }

@@ -1,0 +1,28 @@
+<!-- Carregado só em IDEs com Java (IntelliJ); no DataGrip estas funções não existem. -->
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <projectConfigurable
+                id="t3w.productivity.flyway.env.settings"
+                displayName="Variáveis de Ambiente"
+                parentId="t3w.productivity.flyway.settings"
+                instance="com.github.jefersonsantos06.t3wproductivity.settings.EnvSettingsConfigurable"/>
+        <projectConfigurable
+                id="t3w.productivity.env.presets.settings"
+                displayName="Presets de Variáveis"
+                parentId="t3w.productivity.flyway.settings"
+                instance="com.github.jefersonsantos06.t3wproductivity.settings.EnvPresetsConfigurable"/>
+        <toolWindow
+                id="T3W Productivity"
+                anchor="right"
+                factoryClass="com.github.jefersonsantos06.t3wproductivity.toolwindow.MainToolWindowFactory"/>
+        <runConfigurationExtension implementation="com.github.jefersonsantos06.t3wproductivity.run.ApplicationEnvironmentRunConfigurationExtension"/>
+    </extensions>
+
+    <actions>
+        <action id="t3w.productivity.migratePreparedStatementToNamed"
+                class="com.github.jefersonsantos06.t3wproductivity.actions.MigratePreparedStatementToNamedAction"
+                text="Migrar PreparedStatement Para Named">
+            <add-to-group group-id="t3w.productivity.group" anchor="first"/>
+        </action>
+    </actions>
+</idea-plugin>
